@@ -11,10 +11,9 @@ namespace Euyuil.Azure.Storage.Helper.Tests.Table
         [TestMethod]
         public void ConvertObjectToEntitiesThenConvertBackTest()
         {
-            var partition =
-                new PartitionInfo<TestModel>("UR", obj => obj.Id)
-                    .HasEntityInfo("NM", obj => obj.Version, e => new { e.FirstName, e.LastName })
-                    .HasEntityInfo("DS", obj => obj.Version, e => e.Description);
+            var partition = new PartitionInfo<TestModel>("UR", obj => obj.Id);
+            partition.HasEntityInfo("NM", obj => obj.Version, e => new { e.FirstName, e.LastName });
+            partition.HasEntityInfo("DS", obj => obj.Version, e => e.Description);
 
             var model = new TestModel
             {
