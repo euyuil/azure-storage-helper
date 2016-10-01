@@ -21,7 +21,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
             Func<TObject, object>[] memberGetters;
             Action<TObject, object>[] memberSetters;
 
-            var memberCount = Utilities.ParseLambdaExpression(propertiesExpression, out memberTypes, out memberNames, out memberGetters, out memberSetters);
+            var memberCount = InternalUtilities.ParseLambdaExpression(propertiesExpression, out memberTypes, out memberNames, out memberGetters, out memberSetters);
 
             if (propertyResolvers == null) propertyResolvers = EntityPropertyResolvers.Default;
 

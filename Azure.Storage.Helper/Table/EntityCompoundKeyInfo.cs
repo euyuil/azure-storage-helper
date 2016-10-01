@@ -42,7 +42,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
             Func<TObject, object>[] memberGetters;
             Action<TObject, object>[] memberSetters;
 
-            var memberCount = Utilities.ParseLambdaExpression(compoundKeyExpression, out memberTypes, out memberNames, out memberGetters, out memberSetters);
+            var memberCount = InternalUtilities.ParseLambdaExpression(compoundKeyExpression, out memberTypes, out memberNames, out memberGetters, out memberSetters);
 
             if (keyResolvers == null) keyResolvers = EntityKeyResolvers.Default;
 

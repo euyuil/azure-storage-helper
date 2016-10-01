@@ -75,7 +75,8 @@
     <Compile Include="Table\PartitionInfo.cs" />
     <Compile Include="Table\EntityCompoundKeyInfo.cs" />
     <Compile Include="Table\EntityPropertyResolver.cs" />
-    <Compile Include="Utilities.cs" />
+    <Compile Include="InternalUtilities.cs" />
+    <Compile Include="Table\PartitionInfoExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

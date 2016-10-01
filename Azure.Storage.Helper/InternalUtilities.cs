@@ -5,9 +5,9 @@ using System.Reflection;
 
 namespace Euyuil.Azure.Storage.Helper
 {
-    internal static class Utilities
+    internal static class InternalUtilities
     {
-        public static int ParseLambdaExpression<TObject>(
+        internal static int ParseLambdaExpression<TObject>(
             Expression<Func<TObject, object>> lambdaExpression,
             out Type[] memberTypes,
             out string[] memberNames,
