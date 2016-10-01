@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Euyuil.Azure.Storage.Helper</id>
+    <version>0.1.0.0</version>
+    <title>Euyuil.Azure.Storage.Helper</title>
+    <authors>Liu Yue</authors>
+    <owners>euyuil</owners>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://github.com/euyuil/azure-storage-helper</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>It's my personal helper library for Azure Storage. You can leverage it if you find it useful.</description>
+    <releaseNotes>It's the first published version which has basic functionalities.</releaseNotes>
+    <copyright>Copyright 2016 Liu Yue</copyright>
+    <tags>azure storage helper utility</tags>
+    <dependencies>
+      <dependency id="WindowsAzure.Storage" version="7.2.1" />
+    </dependencies>
+  </metadata>
+</package>
