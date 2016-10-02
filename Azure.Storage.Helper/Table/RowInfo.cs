@@ -1,7 +1,4 @@
-﻿using System.Linq;
-using Microsoft.WindowsAzure.Storage.Table;
-
-namespace Euyuil.Azure.Storage.Helper.Table
+﻿namespace Euyuil.Azure.Storage.Helper.Table
 {
     public class RowInfo<TObject>
     {

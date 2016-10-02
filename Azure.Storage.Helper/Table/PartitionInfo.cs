@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Euyuil.Azure.Storage.Helper.Table
 {
@@ -23,6 +21,14 @@ namespace Euyuil.Azure.Storage.Helper.Table
             Rows = new List<RowInfo<TObject>>();
         }
 
+        public EntityKeyInfo<TObject> PartitionKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the types of the rows in the partition.
+        /// If there are more than 1 type of row, every row should have a unique prefix for row key.
+        /// </summary>
+        public IList<RowInfo<TObject>> Rows { get; set; }
+
         public RowInfo<TObject> Row(
             string rowKeyPrefix,
             Expression<Func<TObject, object>> rowKeySegmentsExpression,
@@ -36,9 +42,5 @@ namespace Euyuil.Azure.Storage.Helper.Table
             Rows.Add(entityInfo);
             return entityInfo;
         }
-
-        public EntityKeyInfo<TObject> PartitionKey { get; set; }
-
-        public IList<RowInfo<TObject>> Rows { get; set; }
     }
 }

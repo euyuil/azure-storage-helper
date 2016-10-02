@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -22,6 +23,7 @@ namespace Euyuil.Azure.Storage.Helper
             if (newExpression == null)
             {
                 var memberConstantExpression = UnwrapConvertExpression(lambdaExpression.Body);
+
                 Type memberType;
                 string memberName;
                 Func<TObject, object> memberGetter;
@@ -35,11 +37,14 @@ namespace Euyuil.Azure.Storage.Helper
             }
             else
             {
-                var properties = newExpression.Members.Where(member => member is PropertyInfo).Cast<PropertyInfo>().ToArray();
+                var properties = newExpression.Members?.Where(member => member is PropertyInfo).Cast<PropertyInfo>().ToArray();
 
-                memberNames = properties.Select(property => property.Name).ToArray();
+                memberNames = properties?.Select(property => property.Name).ToArray() ?? new string[0];
 
                 var argumentExpressions = newExpression.Arguments;
+
+                if (memberNames.Length != argumentExpressions.Count)
+                    throw new FormatException("The input expression is incorrect.");
 
                 memberTypes = new Type[argumentExpressions.Count];
                 memberGetters = new Func<TObject, object>[argumentExpressions.Count];

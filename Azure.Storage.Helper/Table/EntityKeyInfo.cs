@@ -22,7 +22,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
         private readonly Action<TObject, string>[] _keySegmentSetters;
 
         public EntityKeyInfo(
-            Expression<Func<TObject, object>> keySegmentsExpression,
+            Expression<Func<TObject, object>> keySegmentsExpression = null,
             IReadOnlyDictionary<Type, IEntityKeySegmentResolver> keySegmentResolvers = null)
             : this(null, keySegmentsExpression, keySegmentResolvers)
         {
@@ -30,12 +30,17 @@ namespace Euyuil.Azure.Storage.Helper.Table
 
         public EntityKeyInfo(
             string keyPrefix,
-            Expression<Func<TObject, object>> keySegmentsExpression,
+            Expression<Func<TObject, object>> keySegmentsExpression = null,
             IReadOnlyDictionary<Type, IEntityKeySegmentResolver> keySegmentResolvers = null)
         {
-            if (keySegmentsExpression == null) throw new ArgumentNullException(nameof(keySegmentsExpression));
-
             KeyPrefix = keyPrefix;
+
+            if (keySegmentsExpression == null)
+            {
+                _keySegmentGetters = new Func<TObject, string>[0];
+                _keySegmentSetters = new Action<TObject, string>[0];
+                return;
+            }
 
             Type[] memberTypes;
             string[] memberNames;
@@ -72,11 +77,12 @@ namespace Euyuil.Azure.Storage.Helper.Table
         {
             var sb = new StringBuilder();
 
-            if (KeyPrefix != null) sb.Append(KeyPrefix).Append(Separator);
+            if (KeyPrefix != null) sb.Append(KeyPrefix);
 
             for (var i = 0; i < _keySegmentGetters.Length; i++)
             {
                 if (i > 0) sb.Append(Separator);
+                else if (KeyPrefix != null) sb.Append(Separator);
 
                 var key = _keySegmentGetters[i].Invoke(obj);
 
@@ -94,15 +100,32 @@ namespace Euyuil.Azure.Storage.Helper.Table
             if (key == null)
                 throw new FormatException("The key is unexpectedly null.");
 
-            if (KeyPrefix != null)
+            if (KeyPrefix == null)
             {
-                if (!key.StartsWith($"{KeyPrefix}{Separator}"))
-                    throw new FormatException($"The key {key} is expected to start with {KeyPrefix}{Separator}.");
+                if (_keySegmentSetters.Length == 0)
+                {
+                    if (!string.Equals(key, string.Empty))
+                        throw new FormatException($"The key {key} is expected to be empty.");
+                    return;
+                }
+            }
+            else
+            {
+                if (!key.StartsWith(KeyPrefix))
+                    throw new FormatException($"The key {key} is expected to start with {KeyPrefix}.");
+
+                if (_keySegmentSetters.Length == 0)
+                {
+                    if (key.Length != KeyPrefix.Length)
+                        throw new FormatException($"The key {key} is expected to be the same as prefix {KeyPrefix}.");
+                    return;
+                }
+
+                if (key.Length < KeyPrefix.Length + Separator.Length)
+                    throw new FormatException($"The length of key {key} is not expected.");
+
                 key = key.Substring(KeyPrefix.Length + Separator.Length);
             }
-
-            if (string.Equals(key, string.Empty) && _keySegmentSetters.Length == 0)
-                return;
 
             var keyArray = key.Split(SeparatorArray, StringSplitOptions.None);
 

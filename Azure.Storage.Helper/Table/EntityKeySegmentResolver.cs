@@ -53,7 +53,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
 
     public static class EntityKeySegmentResolvers
     {
-        private static readonly long DateTimeMaxValueTicks = DateTime.MaxValue.Ticks;
+        private const long DateTimeMaxValueTicks = long.MaxValue; // DateTime.MaxValue.Ticks;
 
         private static readonly Dictionary<Type, IEntityKeySegmentResolver> DefaultInternal;
 
@@ -72,14 +72,14 @@ namespace Euyuil.Azure.Storage.Helper.Table
 
         public static IReadOnlyDictionary<Type, IEntityKeySegmentResolver> Default => DefaultInternal;
 
-        private static string ConvertDateTimeToKeySegment(DateTime dateTime)
+        internal static string ConvertDateTimeToKeySegment(DateTime dateTime)
         {
             var utcDateTime = dateTime.Kind == DateTimeKind.Utc ? dateTime : dateTime.ToUniversalTime();
             var ticksToMax = DateTimeMaxValueTicks - utcDateTime.Ticks;
             return ticksToMax.ToString("x16");
         }
 
-        private static DateTime ConvertKeySegmentToDateTime(string ticksToMaxStr)
+        internal static DateTime ConvertKeySegmentToDateTime(string ticksToMaxStr)
         {
             var ticksToMax = long.Parse(ticksToMaxStr, NumberStyles.HexNumber);
             var ticks = DateTimeMaxValueTicks - ticksToMax;
@@ -87,14 +87,14 @@ namespace Euyuil.Azure.Storage.Helper.Table
             return utcDateTime;
         }
 
-        private static string ConvertDateTimeOffsetToKeySegment(DateTimeOffset dateTime)
+        internal static string ConvertDateTimeOffsetToKeySegment(DateTimeOffset dateTime)
         {
             var utcDateTime = dateTime.UtcDateTime;
             var ticksToMax = DateTimeMaxValueTicks - utcDateTime.Ticks;
             return ticksToMax.ToString("x16");
         }
 
-        private static DateTimeOffset ConvertKeySegmentToDateTimeOffset(string ticksToMaxStr)
+        internal static DateTimeOffset ConvertKeySegmentToDateTimeOffset(string ticksToMaxStr)
         {
             var ticksToMax = long.Parse(ticksToMaxStr, NumberStyles.HexNumber);
             var ticks = DateTimeMaxValueTicks - ticksToMax;

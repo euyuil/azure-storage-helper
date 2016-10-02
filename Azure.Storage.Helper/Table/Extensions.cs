@@ -116,7 +116,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
 
             var tableQuerySegment = await table.ExecuteQuerySegmentedAsync(new TableQuery().Where(filter).Take(1), null);
 
-            return tableQuerySegment.Results.Count != 0 && row.FillObjectWithEntity(obj, tableQuerySegment.Results);
+            return tableQuerySegment.Results.Count > 0 && row.FillObjectWithEntity(obj, tableQuerySegment.Results);
         }
 
         public static string GenerateEqPartitionGeRowFilter<TObject>(this RowInfo<TObject> row, TObject obj)
