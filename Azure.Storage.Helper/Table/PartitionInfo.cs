@@ -8,63 +8,37 @@ namespace Euyuil.Azure.Storage.Helper.Table
 {
     public class PartitionInfo<TObject>
     {
-        public PartitionInfo()
-        {
-            Entities = new List<EntityInfo<TObject>>();
-        }
-
-        public PartitionInfo(EntityCompoundKeyInfo<TObject> partitionKey)
+        public PartitionInfo(EntityKeyInfo<TObject> partitionKey, params RowInfo<TObject>[] rows)
         {
             PartitionKey = partitionKey;
-            Entities = new List<EntityInfo<TObject>>();
+            Rows = new List<RowInfo<TObject>>(rows);
         }
 
-        public PartitionInfo(EntityCompoundKeyInfo<TObject> partitionKey, params EntityInfo<TObject>[] entities)
+        public PartitionInfo(
+            string partitionKeyPrefix,
+            Expression<Func<TObject, object>> partitionKeySegmentsExpression,
+            IReadOnlyDictionary<Type, IEntityKeySegmentResolver> partitionKeySegmentResolvers = null)
         {
-            PartitionKey = partitionKey;
-            Entities = new List<EntityInfo<TObject>>(entities);
+            PartitionKey = new EntityKeyInfo<TObject>(partitionKeyPrefix, partitionKeySegmentsExpression, partitionKeySegmentResolvers);
+            Rows = new List<RowInfo<TObject>>();
         }
 
-        public PartitionInfo(string partitionKeyPrefix, Expression<Func<TObject, object>> partitionKeyExpression, IReadOnlyDictionary<Type, IEntityKeyResolver> partitionKeyResolvers = null)
-        {
-            PartitionKey = new EntityCompoundKeyInfo<TObject>(partitionKeyPrefix, partitionKeyExpression, partitionKeyResolvers);
-            Entities = new List<EntityInfo<TObject>>();
-        }
-
-        public PartitionInfo<TObject> HasEntityInfo(EntityInfo<TObject> entityInfo)
-        {
-            Entities.Add(entityInfo);
-            return this;
-        }
-
-        public EntityInfo<TObject> HasEntityInfo(
+        public RowInfo<TObject> Row(
             string rowKeyPrefix,
-            Expression<Func<TObject, object>> rowKeyExpression,
+            Expression<Func<TObject, object>> rowKeySegmentsExpression,
             Expression<Func<TObject, object>> propertiesExpression,
-            IReadOnlyDictionary<Type, IEntityKeyResolver> rowKeyResolvers = null,
+            IReadOnlyDictionary<Type, IEntityKeySegmentResolver> rowKeySegmentResolvers = null,
             IReadOnlyDictionary<Type, IEntityPropertyResolver> propertyResolvers = null)
         {
-            var rowKey = new EntityCompoundKeyInfo<TObject>(rowKeyPrefix, rowKeyExpression, rowKeyResolvers);
+            var rowKey = new EntityKeyInfo<TObject>(rowKeyPrefix, rowKeySegmentsExpression, rowKeySegmentResolvers);
             var properties = new EntityPropertiesInfo<TObject>(propertiesExpression, propertyResolvers);
-            var entityInfo = new EntityInfo<TObject>(PartitionKey, rowKey, properties);
-            Entities.Add(entityInfo);
+            var entityInfo = new RowInfo<TObject>(PartitionKey, rowKey, properties);
+            Rows.Add(entityInfo);
             return entityInfo;
         }
 
-        public EntityCompoundKeyInfo<TObject> PartitionKey { get; set; }
+        public EntityKeyInfo<TObject> PartitionKey { get; set; }
 
-        public IList<EntityInfo<TObject>> Entities { get; set; }
-
-        public IEnumerable<DynamicTableEntity> ConvertObjectToEntities(TObject obj)
-        {
-            var partitionKey = PartitionKey.CompoundKeyGetter.Invoke(obj);
-
-            foreach (var entityInfo in Entities)
-            {
-                var rowKey = entityInfo.RowKey.CompoundKeyGetter.Invoke(obj);
-                var entityProperties = entityInfo.Properties.PropertiesGetter.Invoke(obj).ToDictionary(e => e.Key, e => e.Value);
-                yield return new DynamicTableEntity(partitionKey, rowKey, null, entityProperties);
-            }
-        }
+        public IList<RowInfo<TObject>> Rows { get; set; }
     }
 }

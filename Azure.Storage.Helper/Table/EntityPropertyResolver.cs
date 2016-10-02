@@ -6,46 +6,49 @@ namespace Euyuil.Azure.Storage.Helper.Table
 {
     public interface IEntityPropertyResolver
     {
-        Func<object, EntityProperty> PropertyToEntityPropertyConverter { get;}
+        Func<object, EntityProperty> MemberToEntityPropertyConverter { get;}
 
-        Func<EntityProperty, object> EntityPropertyToPropertyConverter { get; }
+        Func<EntityProperty, object> EntityPropertyToMemberConverter { get; }
     }
 
-    public interface IEntityPropertyResolver<TProperty> : IEntityPropertyResolver
+    public interface IEntityPropertyResolver<TMember> : IEntityPropertyResolver
     {
-        new Func<TProperty, EntityProperty> PropertyToEntityPropertyConverter { get; }
+        new Func<TMember, EntityProperty> MemberToEntityPropertyConverter { get; }
 
-        new Func<EntityProperty, TProperty> EntityPropertyToPropertyConverter { get; }
+        new Func<EntityProperty, TMember> EntityPropertyToMemberConverter { get; }
     }
 
-    public class EntityPropertyResolver<TProperty> : IEntityPropertyResolver<TProperty>
+    public class EntityPropertyResolver<TMember> : IEntityPropertyResolver<TMember>
     {
         public EntityPropertyResolver()
         {
         }
 
-        public EntityPropertyResolver(Func<TProperty, EntityProperty> propertyToEntityPropertyConverter, Func<EntityProperty, TProperty> entityPropertyToPropertyConverter)
+        public EntityPropertyResolver(
+            Func<TMember, EntityProperty> memberToEntityPropertyConverter, Func<EntityProperty, TMember> entityPropertyToMemberConverter)
         {
-            PropertyToEntityPropertyConverter = propertyToEntityPropertyConverter;
-            EntityPropertyToPropertyConverter = entityPropertyToPropertyConverter;
+            MemberToEntityPropertyConverter = memberToEntityPropertyConverter;
+            EntityPropertyToMemberConverter = entityPropertyToMemberConverter;
         }
 
-        Func<object, EntityProperty> IEntityPropertyResolver.PropertyToEntityPropertyConverter => PropertyToEntityPropertyConverter == null ? (Func<object, EntityProperty>)null : PropertyToEntityProperty;
+        Func<object, EntityProperty> IEntityPropertyResolver.MemberToEntityPropertyConverter =>
+            MemberToEntityPropertyConverter == null ? (Func<object, EntityProperty>)null : ConvertMemberToEntityProperty;
 
-        Func<EntityProperty, object> IEntityPropertyResolver.EntityPropertyToPropertyConverter => EntityPropertyToPropertyConverter == null ? (Func<EntityProperty, object>)null : EntityPropertyToProperty;
+        Func<EntityProperty, object> IEntityPropertyResolver.EntityPropertyToMemberConverter =>
+            EntityPropertyToMemberConverter == null ? (Func<EntityProperty, object>)null : ConvertEntityPropertyToMember;
 
-        public Func<TProperty, EntityProperty> PropertyToEntityPropertyConverter { get; set; }
+        public Func<TMember, EntityProperty> MemberToEntityPropertyConverter { get; set; }
 
-        public Func<EntityProperty, TProperty> EntityPropertyToPropertyConverter { get; set; }
+        public Func<EntityProperty, TMember> EntityPropertyToMemberConverter { get; set; }
 
-        private EntityProperty PropertyToEntityProperty(object property)
+        private EntityProperty ConvertMemberToEntityProperty(object member)
         {
-            return PropertyToEntityPropertyConverter.Invoke((TProperty)property);
+            return MemberToEntityPropertyConverter.Invoke((TMember)member);
         }
 
-        private object EntityPropertyToProperty(EntityProperty entityProperty)
+        private object ConvertEntityPropertyToMember(EntityProperty entityProperty)
         {
-            return EntityPropertyToPropertyConverter.Invoke(entityProperty);
+            return EntityPropertyToMemberConverter.Invoke(entityProperty);
         }
     }
 
@@ -55,11 +58,27 @@ namespace Euyuil.Azure.Storage.Helper.Table
 
         static EntityPropertyResolvers()
         {
+            // ReSharper disable PossibleInvalidOperationException
             DefaultInternal = new Dictionary<Type, IEntityPropertyResolver>
             {
-                { typeof(string), new EntityPropertyResolver<string>(EntityProperty.GeneratePropertyForString, entityProperty => entityProperty.StringValue) },
+                { typeof(bool), new EntityPropertyResolver<bool>(member => EntityProperty.GeneratePropertyForBool(member), entityProperty => entityProperty.BooleanValue.Value) },
+                { typeof(bool?), new EntityPropertyResolver<bool?>(EntityProperty.GeneratePropertyForBool, entityProperty => entityProperty.BooleanValue) },
+                { typeof(int), new EntityPropertyResolver<int>(member => EntityProperty.GeneratePropertyForInt(member), entityProperty => entityProperty.Int32Value.Value) },
+                { typeof(int?), new EntityPropertyResolver<int?>(EntityProperty.GeneratePropertyForInt, entityProperty => entityProperty.Int32Value) },
+                { typeof(long), new EntityPropertyResolver<long>(member => EntityProperty.GeneratePropertyForLong(member), entityProperty => entityProperty.Int64Value.Value) },
+                { typeof(long?), new EntityPropertyResolver<long?>(EntityProperty.GeneratePropertyForLong, entityProperty => entityProperty.Int64Value) },
+                { typeof(double), new EntityPropertyResolver<double>(member => EntityProperty.GeneratePropertyForDouble(member), entityProperty => entityProperty.DoubleValue.Value) },
+                { typeof(double?), new EntityPropertyResolver<double?>(EntityProperty.GeneratePropertyForDouble, entityProperty => entityProperty.DoubleValue) },
+                { typeof(Guid), new EntityPropertyResolver<Guid>(member => EntityProperty.GeneratePropertyForGuid(member), entityProperty => entityProperty.GuidValue.Value) },
                 { typeof(Guid?), new EntityPropertyResolver<Guid?>(EntityProperty.GeneratePropertyForGuid, entityProperty => entityProperty.GuidValue) },
+                { typeof(DateTime), new EntityPropertyResolver<DateTime>(member => EntityProperty.GeneratePropertyForDateTimeOffset(member), entityProperty => entityProperty.DateTime.Value) },
+                { typeof(DateTime?), new EntityPropertyResolver<DateTime?>(member => EntityProperty.GeneratePropertyForDateTimeOffset(member), entityProperty => entityProperty.DateTime) },
+                { typeof(DateTimeOffset), new EntityPropertyResolver<DateTimeOffset>(member => EntityProperty.GeneratePropertyForDateTimeOffset(member), entityProperty => entityProperty.DateTimeOffsetValue.Value) },
+                { typeof(DateTimeOffset?), new EntityPropertyResolver<DateTimeOffset?>(EntityProperty.GeneratePropertyForDateTimeOffset, entityProperty => entityProperty.DateTimeOffsetValue) },
+                { typeof(string), new EntityPropertyResolver<string>(EntityProperty.GeneratePropertyForString, entityProperty => entityProperty.StringValue) },
+                { typeof(byte[]), new EntityPropertyResolver<byte[]>(EntityProperty.GeneratePropertyForByteArray, entityProperty => entityProperty.BinaryValue) },
             };
+            // ReSharper restore PossibleInvalidOperationException
         }
 
         public static IReadOnlyDictionary<Type, IEntityPropertyResolver> Default => DefaultInternal;

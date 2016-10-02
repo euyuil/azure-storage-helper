@@ -12,7 +12,9 @@ namespace Euyuil.Azure.Storage.Helper.Table
 
         private readonly Dictionary<string, Action<TObject, EntityProperty>> _propertySetters;
 
-        public EntityPropertiesInfo(Expression<Func<TObject, object>> propertiesExpression, IReadOnlyDictionary<Type, IEntityPropertyResolver> propertyResolvers = null)
+        public EntityPropertiesInfo(
+            Expression<Func<TObject, object>> propertiesExpression,
+            IReadOnlyDictionary<Type, IEntityPropertyResolver> propertyResolvers = null)
         {
             if (propertiesExpression == null) throw new ArgumentNullException(nameof(propertiesExpression));
 
@@ -21,7 +23,8 @@ namespace Euyuil.Azure.Storage.Helper.Table
             Func<TObject, object>[] memberGetters;
             Action<TObject, object>[] memberSetters;
 
-            var memberCount = InternalUtilities.ParseLambdaExpression(propertiesExpression, out memberTypes, out memberNames, out memberGetters, out memberSetters);
+            var memberCount = InternalUtilities.ParseLambdaExpression(
+                propertiesExpression, out memberTypes, out memberNames, out memberGetters, out memberSetters);
 
             if (propertyResolvers == null) propertyResolvers = EntityPropertyResolvers.Default;
 
@@ -36,8 +39,8 @@ namespace Euyuil.Azure.Storage.Helper.Table
                 var memberSetter = memberSetters[i];
                 var propertyResolver = propertyResolvers[memberType];
 
-                _propertyGetters[memberName] = obj => propertyResolver.PropertyToEntityPropertyConverter.Invoke(memberGetter.Invoke(obj));
-                _propertySetters[memberName] = (obj, entityProperty) => memberSetter.Invoke(obj, propertyResolver.EntityPropertyToPropertyConverter.Invoke(entityProperty));
+                _propertyGetters[memberName] = obj => propertyResolver.MemberToEntityPropertyConverter.Invoke(memberGetter.Invoke(obj));
+                _propertySetters[memberName] = (obj, entityProperty) => memberSetter.Invoke(obj, propertyResolver.EntityPropertyToMemberConverter.Invoke(entityProperty));
             }
         }
 

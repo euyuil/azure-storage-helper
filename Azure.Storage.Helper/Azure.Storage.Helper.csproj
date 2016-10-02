@@ -70,13 +70,13 @@
   <ItemGroup>
     <Compile Include="Table\EntityPropertiesInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Table\EntityKeyResolver.cs" />
-    <Compile Include="Table\EntityInfo.cs" />
+    <Compile Include="Table\EntityKeySegmentResolver.cs" />
+    <Compile Include="Table\RowInfo.cs" />
     <Compile Include="Table\PartitionInfo.cs" />
-    <Compile Include="Table\EntityCompoundKeyInfo.cs" />
+    <Compile Include="Table\EntityKeyInfo.cs" />
     <Compile Include="Table\EntityPropertyResolver.cs" />
     <Compile Include="InternalUtilities.cs" />
-    <Compile Include="Table\PartitionInfoExtensions.cs" />
+    <Compile Include="Table\Extensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
