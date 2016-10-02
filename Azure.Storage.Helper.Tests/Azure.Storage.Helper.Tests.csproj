@@ -81,7 +81,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="Table\EntityCompoundKeyInfoTests.cs" />
+    <Compile Include="Table\EntityKeyInfoTests.cs" />
     <Compile Include="Expect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Table\EntityTests.cs" />
