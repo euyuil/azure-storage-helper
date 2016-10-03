@@ -71,6 +71,7 @@
     <Compile Include="Table\EntityPropertiesInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Table\EntityKeySegmentResolver.cs" />
+    <Compile Include="Table\ResolverNotFoundException.cs" />
     <Compile Include="Table\RowInfo.cs" />
     <Compile Include="Table\PartitionInfo.cs" />
     <Compile Include="Table\EntityKeyInfo.cs" />

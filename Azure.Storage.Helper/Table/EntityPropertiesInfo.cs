@@ -26,8 +26,6 @@ namespace Euyuil.Azure.Storage.Helper.Table
             var memberCount = InternalUtilities.ParseLambdaExpression(
                 propertiesExpression, out memberTypes, out memberNames, out memberGetters, out memberSetters);
 
-            if (propertyResolvers == null) propertyResolvers = EntityPropertyResolvers.Default;
-
             _propertyGetters = new Dictionary<string, Func<TObject, EntityProperty>>();
             _propertySetters = new Dictionary<string, Action<TObject, EntityProperty>>();
 
@@ -37,7 +35,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
                 var memberName = memberNames[i];
                 var memberGetter = memberGetters[i];
                 var memberSetter = memberSetters[i];
-                var propertyResolver = propertyResolvers[memberType];
+                var propertyResolver = propertyResolvers.GetEntityPropertyResolver(memberType);
 
                 _propertyGetters[memberName] = obj => propertyResolver.MemberToEntityPropertyConverter.Invoke(memberGetter.Invoke(obj));
                 _propertySetters[memberName] = (obj, entityProperty) => memberSetter.Invoke(obj, propertyResolver.EntityPropertyToMemberConverter.Invoke(entityProperty));
