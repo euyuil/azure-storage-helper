@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Euyuil.Azure.Storage.Helper.Table
 {
@@ -71,6 +73,45 @@ namespace Euyuil.Azure.Storage.Helper.Table
         }
 
         public static IReadOnlyDictionary<Type, IEntityKeySegmentResolver> Default => DefaultInternal;
+
+        internal static IEntityKeySegmentResolver GetEntityKeySegmentResolver(this IReadOnlyDictionary<Type, IEntityKeySegmentResolver> keySegmentResolvers, Type type)
+        {
+            IEntityKeySegmentResolver keySegmentResolver;
+
+            if (keySegmentResolvers != null)
+            {
+                if (keySegmentResolvers.TryGetValue(type, out keySegmentResolver))
+                {
+                    return keySegmentResolver;
+                }
+            }
+
+            if (Default.TryGetValue(type, out keySegmentResolver))
+            {
+                return keySegmentResolver;
+            }
+
+            return GetEntityKeySegmentResolverForOtherTypes(type);
+        }
+
+        private static IEntityKeySegmentResolver GetEntityKeySegmentResolverForOtherTypes(Type type)
+        {
+            if (type.IsEnum)
+            {
+                if (type.GetCustomAttributes(typeof(FlagsAttribute), true).Any())
+                {
+                    return new EntityKeySegmentResolver<Enum>(
+                        enumValue => enumValue.ToString("F"),
+                        stringValue => (Enum)Enum.Parse(type, stringValue, true));
+                }
+
+                return new EntityKeySegmentResolver<Enum>(
+                    enumValue => enumValue.ToString("G"),
+                    stringValue => (Enum)Enum.Parse(type, stringValue, true));
+            }
+
+            throw new ResolverNotFoundException($"The property resolver is not found for type {type.FullName}.");
+        }
 
         internal static string ConvertDateTimeToKeySegment(DateTime dateTime)
         {

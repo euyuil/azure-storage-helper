@@ -50,8 +50,6 @@ namespace Euyuil.Azure.Storage.Helper.Table
             var memberCount = InternalUtilities.ParseLambdaExpression(
                 keySegmentsExpression, out memberTypes, out memberNames, out memberGetters, out memberSetters);
 
-            if (keySegmentResolvers == null) keySegmentResolvers = EntityKeySegmentResolvers.Default;
-
             _keySegmentGetters = new Func<TObject, string>[memberCount];
             _keySegmentSetters = new Action<TObject, string>[memberCount];
 
@@ -60,7 +58,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
                 var memberType = memberTypes[i];
                 var memberGetter = memberGetters[i];
                 var memberSetter = memberSetters[i];
-                var keySegmentResolver = keySegmentResolvers[memberType];
+                var keySegmentResolver = keySegmentResolvers.GetEntityKeySegmentResolver(memberType);
 
                 _keySegmentGetters[i] = obj => keySegmentResolver.MemberToKeySegmentConverter.Invoke(memberGetter.Invoke(obj));
                 _keySegmentSetters[i] = (obj, keySegment) => memberSetter.Invoke(obj, keySegmentResolver.KeySegmentToMemberConverter.Invoke(keySegment));
