@@ -68,6 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Blob\BlobNameInfo.cs" />
     <Compile Include="Table\EntityPropertiesInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Table\EntityKeySegmentResolver.cs" />

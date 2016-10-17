@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Euyuil.Azure.Storage.Helper.Table
 {
@@ -65,7 +64,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
             {
                 { typeof(int), new EntityKeySegmentResolver<int>(member => member.ToString("x8"), key => int.Parse(key, NumberStyles.HexNumber)) },
                 { typeof(long), new EntityKeySegmentResolver<long>(member => member.ToString("x16"), key => long.Parse(key, NumberStyles.HexNumber)) },
-                { typeof(Guid), new EntityKeySegmentResolver<Guid>(member => member.ToString("n"), key => new Guid(key)) },
+                { typeof(Guid), new EntityKeySegmentResolver<Guid>(member => member.ToString("d"), Guid.Parse) },
                 { typeof(string), new EntityKeySegmentResolver<string>(member => member, key => key) },
                 { typeof(DateTime), new EntityKeySegmentResolver<DateTime>(ConvertDateTimeToKeySegment, ConvertKeySegmentToDateTime) },
                 { typeof(DateTimeOffset), new EntityKeySegmentResolver<DateTimeOffset>(ConvertDateTimeOffsetToKeySegment, ConvertKeySegmentToDateTimeOffset) }
