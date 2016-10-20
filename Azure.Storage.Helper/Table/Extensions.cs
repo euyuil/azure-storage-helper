@@ -8,6 +8,8 @@ namespace Euyuil.Azure.Storage.Helper.Table
 {
     public static class Extensions
     {
+        #region Conversions from objects to entities.
+
         public static DynamicTableEntity ConvertObjectToEntity<TObject>(this RowInfo<TObject> row, TObject obj)
         {
             if (obj == null) throw new ArgumentNullException(nameof(obj));
@@ -29,6 +31,10 @@ namespace Euyuil.Azure.Storage.Helper.Table
             }
         }
 
+        #endregion
+
+        #region Conversions from entities to objects.
+
         public static bool FillObjectWithEntity<TObject>(this RowInfo<TObject> row,  TObject obj, DynamicTableEntity entity)
         {
             if (entity == null) return false;
@@ -36,6 +42,12 @@ namespace Euyuil.Azure.Storage.Helper.Table
             row.RowKey.KeySetter.Invoke(obj, entity.RowKey);
             row.Properties.PropertiesSetter.Invoke(obj, entity.Properties);
             return true;
+        }
+
+        public static TObject ConvertEntityToObject<TObject>(this RowInfo<TObject> row, DynamicTableEntity entity) where TObject : class, new()
+        {
+            var obj = new TObject();
+            return row.FillObjectWithEntity(obj, entity) ? obj : null;
         }
 
         public static bool FillObjectWithEntity<TObject>(this RowInfo<TObject> row, TObject obj, IEnumerable<DynamicTableEntity> entities)
@@ -89,8 +101,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
             return partition.FillObjectWithEntity(obj, entity);
         }
 
-        public static bool FillObjectWithEntity<TObject>(
-            this IEnumerable<PartitionInfo<TObject>> partitions, TObject obj, IEnumerable<DynamicTableEntity> entities)
+        public static bool FillObjectWithEntity<TObject>(this IEnumerable<PartitionInfo<TObject>> partitions, TObject obj, IEnumerable<DynamicTableEntity> entities)
         {
             var entityCollection = entities as ICollection<DynamicTableEntity> ?? entities.ToArray();
             if (entityCollection.Count <= 0) return false;
@@ -98,6 +109,55 @@ namespace Euyuil.Azure.Storage.Helper.Table
             var partitionCollection = partitions as IReadOnlyCollection<PartitionInfo<TObject>> ?? partitions.ToArray();
 
             return entityCollection.Aggregate(true, (b, entity) => b && partitionCollection.FillObjectWithEntity(obj, entity));
+        }
+
+        #endregion
+
+        public static string GenerateFilterEqpkGerk<TObject>(this RowInfo<TObject> row, TObject eqpk)
+        {
+            var partitionKey = row.PartitionKey.KeyGetter.Invoke(eqpk);
+            var rowKey = row.RowKey.KeyGetter.Invoke(eqpk);
+
+            var partitionKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.PartitionKey), QueryComparisons.Equal, partitionKey);
+            var rowKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.RowKey), QueryComparisons.GreaterThanOrEqual, rowKey);
+            var filter = TableQuery.CombineFilters(partitionKeyFilter, TableOperators.And, rowKeyFilter);
+
+            return filter;
+        }
+
+        public static string GenerateFilterEqpkGerkLtrk<TObject>(this RowInfo<TObject> row, TObject eqpk, TObject gerk, TObject ltrk)
+        {
+            var partitionKey = row.PartitionKey.KeyGetter.Invoke(eqpk);
+            var geRowKey = row.RowKey.KeyGetter.Invoke(gerk);
+            var ltRowKey = row.RowKey.KeyGetter.Invoke(ltrk);
+
+            var partitionKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.PartitionKey), QueryComparisons.Equal, partitionKey);
+            var rowKeyFilter = TableQuery.CombineFilters(
+                TableQuery.GenerateFilterCondition(nameof(ITableEntity.RowKey), QueryComparisons.GreaterThanOrEqual, geRowKey),
+                TableOperators.And,
+                TableQuery.GenerateFilterCondition(nameof(ITableEntity.RowKey), QueryComparisons.LessThan, ltRowKey));
+            var filter = TableQuery.CombineFilters(partitionKeyFilter, TableOperators.And, rowKeyFilter);
+
+            return filter;
+        }
+
+        public static string GenerateFilterGepkEqrk<TObject>(this RowInfo<TObject> row, TObject obj)
+        {
+            var partitionKey = row.PartitionKey.KeyGetter.Invoke(obj);
+            var rowKey = row.RowKey.KeyGetter.Invoke(obj);
+
+            var partitionKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.PartitionKey), QueryComparisons.GreaterThanOrEqual, partitionKey);
+            var rowKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.RowKey), QueryComparisons.Equal, rowKey);
+            var filter = TableQuery.CombineFilters(partitionKeyFilter, TableOperators.And, rowKeyFilter);
+
+            return filter;
+        }
+
+        public static string GenerateFilterEqrk<TObject>(this RowInfo<TObject> row, TObject obj)
+        {
+            var rowKey = row.RowKey.KeyGetter.Invoke(obj);
+            var filter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.RowKey), QueryComparisons.Equal, rowKey);
+            return filter;
         }
 
         public static async Task<bool> FillObjectWithExactMatchAsync<TObject>(this RowInfo<TObject> row, TObject obj, CloudTable table)
@@ -112,42 +172,23 @@ namespace Euyuil.Azure.Storage.Helper.Table
 
         public static async Task<bool> FillObjectWithFirstMatchAsync<TObject>(this RowInfo<TObject> row, TObject obj, CloudTable table, string filter = null)
         {
-            if (filter == null) filter = row.GenerateEqPartitionGeRowFilter(obj);
+            // TODO Filter might cause timeout...
+            if (filter == null) filter = row.GenerateFilterEqpkGerk(obj);
 
             var tableQuerySegment = await table.ExecuteQuerySegmentedAsync(new TableQuery().Where(filter).Take(1), null);
 
             return tableQuerySegment.Results.Count > 0 && row.FillObjectWithEntity(obj, tableQuerySegment.Results);
         }
 
-        public static string GenerateEqPartitionGeRowFilter<TObject>(this RowInfo<TObject> row, TObject obj)
+        public static async Task<PagedList<TObject>> QueryObjectsEqpkGerkLtrkAsync<TObject>(this CloudTable table, RowInfo<TObject> row, TObject eqpk, TObject gerk, TObject ltrk, int? limit, string paginationToken) where TObject : class, new()
         {
-            var partitionKey = row.PartitionKey.KeyGetter.Invoke(obj);
-            var rowKey = row.RowKey.KeyGetter.Invoke(obj);
+            var filter = row.GenerateFilterEqpkGerkLtrk(eqpk, gerk, ltrk);
+            var tableContinuationToken = Utilities.ConvertPaginationTokenToTableContinuationToken(paginationToken);
+            var tableQuerySegment = await table.ExecuteQuerySegmentedAsync(new TableQuery().Where(filter).Take(limit), tableContinuationToken);
 
-            var partitionKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.PartitionKey), QueryComparisons.Equal, partitionKey);
-            var rowKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.RowKey), QueryComparisons.GreaterThanOrEqual, rowKey);
-            var filter = TableQuery.CombineFilters(partitionKeyFilter, TableOperators.And, rowKeyFilter);
-
-            return filter;
-        }
-
-        public static string GenerateGePartitionEqRowFilter<TObject>(this RowInfo<TObject> row, TObject obj)
-        {
-            var partitionKey = row.PartitionKey.KeyGetter.Invoke(obj);
-            var rowKey = row.RowKey.KeyGetter.Invoke(obj);
-
-            var partitionKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.PartitionKey), QueryComparisons.GreaterThanOrEqual, partitionKey);
-            var rowKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.RowKey), QueryComparisons.Equal, rowKey);
-            var filter = TableQuery.CombineFilters(partitionKeyFilter, TableOperators.And, rowKeyFilter);
-
-            return filter;
-        }
-
-        public static string GenerateEqRowFilter<TObject>(this RowInfo<TObject> row, TObject obj)
-        {
-            var rowKey = row.RowKey.KeyGetter.Invoke(obj);
-            var filter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.RowKey), QueryComparisons.Equal, rowKey);
-            return filter;
+            return new PagedList<TObject>(
+                tableQuerySegment.Results.Select(row.ConvertEntityToObject),
+                Utilities.ConvertTableContinuationTokenToPaginationToken(tableQuerySegment.ContinuationToken));
         }
 
         private static bool DoesKeyInfoMatchKey<TObject>(EntityKeyInfo<TObject> keyInfo, string key)

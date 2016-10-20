@@ -8,15 +8,15 @@ namespace Euyuil.Azure.Storage.Helper.Table
 {
     public class EntityPropertiesInfo<TObject>
     {
-        private readonly Dictionary<string, Func<TObject, EntityProperty>> _propertyGetters;
+        private readonly Dictionary<string, Func<TObject, EntityProperty>> _propertyGetters = new Dictionary<string, Func<TObject, EntityProperty>>();
 
-        private readonly Dictionary<string, Action<TObject, EntityProperty>> _propertySetters;
+        private readonly Dictionary<string, Action<TObject, EntityProperty>> _propertySetters = new Dictionary<string, Action<TObject, EntityProperty>>();
 
         public EntityPropertiesInfo(
             Expression<Func<TObject, object>> propertiesExpression,
             IReadOnlyDictionary<Type, IEntityPropertyResolver> propertyResolvers = null)
         {
-            if (propertiesExpression == null) throw new ArgumentNullException(nameof(propertiesExpression));
+            if (propertiesExpression == null) return;
 
             Type[] memberTypes;
             string[] memberNames;
@@ -25,9 +25,6 @@ namespace Euyuil.Azure.Storage.Helper.Table
 
             var memberCount = InternalUtilities.ParseLambdaExpression(
                 propertiesExpression, out memberTypes, out memberNames, out memberGetters, out memberSetters);
-
-            _propertyGetters = new Dictionary<string, Func<TObject, EntityProperty>>();
-            _propertySetters = new Dictionary<string, Action<TObject, EntityProperty>>();
 
             for (var i = 0; i < memberCount; ++i)
             {

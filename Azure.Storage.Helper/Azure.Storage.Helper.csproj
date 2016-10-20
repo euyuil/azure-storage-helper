@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Blob\BlobNameInfo.cs" />
+    <Compile Include="PagedList.cs" />
     <Compile Include="Table\EntityPropertiesInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Table\EntityKeySegmentResolver.cs" />
@@ -79,6 +80,7 @@
     <Compile Include="Table\EntityPropertyResolver.cs" />
     <Compile Include="InternalUtilities.cs" />
     <Compile Include="Table\Extensions.cs" />
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

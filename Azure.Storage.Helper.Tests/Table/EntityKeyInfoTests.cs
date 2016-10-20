@@ -41,7 +41,7 @@ namespace Euyuil.Azure.Storage.Helper.Tests.Table
             };
 
             // ReSharper disable once ObjectCreationAsStatement
-            Expect.Exception<KeyNotFoundException>(() => new EntityKeyInfo<TestModel>(e => null)); // No resolver for Object type.
+            Expect.Exception<Exception>(() => new EntityKeyInfo<TestModel>(e => null)); // No resolver for Object type.
 
             foreach (var keyInfo in keyInfoArray)
             {
@@ -221,7 +221,7 @@ namespace Euyuil.Azure.Storage.Helper.Tests.Table
             };
 
             // ReSharper disable once ObjectCreationAsStatement
-            Expect.Exception<KeyNotFoundException>(() => new EntityKeyInfo<TestModel>("UR", e => null)); // No resolver for Object type.
+            Expect.Exception<Exception>(() => new EntityKeyInfo<TestModel>("UR", e => null)); // No resolver for Object type.
 
             foreach (var keyInfo in keyInfoArray)
             {
