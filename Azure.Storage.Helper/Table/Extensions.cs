@@ -113,10 +113,18 @@ namespace Euyuil.Azure.Storage.Helper.Table
 
         #endregion
 
-        public static string GenerateFilterEqpkGerk<TObject>(this RowInfo<TObject> row, TObject eqpk)
+        public static string GenerateFilterEqpk<TObject>(this RowInfo<TObject> row, TObject eqpk)
         {
             var partitionKey = row.PartitionKey.KeyGetter.Invoke(eqpk);
-            var rowKey = row.RowKey.KeyGetter.Invoke(eqpk);
+            var partitionKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.PartitionKey), QueryComparisons.Equal, partitionKey);
+
+            return partitionKeyFilter;
+        }
+
+        public static string GenerateFilterEqpkGerk<TObject>(this RowInfo<TObject> row, TObject eqpk, TObject gerk)
+        {
+            var partitionKey = row.PartitionKey.KeyGetter.Invoke(eqpk);
+            var rowKey = row.RowKey.KeyGetter.Invoke(gerk);
 
             var partitionKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.PartitionKey), QueryComparisons.Equal, partitionKey);
             var rowKeyFilter = TableQuery.GenerateFilterCondition(nameof(ITableEntity.RowKey), QueryComparisons.GreaterThanOrEqual, rowKey);
@@ -173,11 +181,22 @@ namespace Euyuil.Azure.Storage.Helper.Table
         public static async Task<bool> FillObjectWithFirstMatchAsync<TObject>(this RowInfo<TObject> row, TObject obj, CloudTable table, string filter = null)
         {
             // TODO Filter might cause timeout...
-            if (filter == null) filter = row.GenerateFilterEqpkGerk(obj);
+            if (filter == null) filter = row.GenerateFilterEqpkGerk(obj, obj);
 
             var tableQuerySegment = await table.ExecuteQuerySegmentedAsync(new TableQuery().Where(filter).Take(1), null);
 
             return tableQuerySegment.Results.Count > 0 && row.FillObjectWithEntity(obj, tableQuerySegment.Results);
+        }
+
+        public static async Task<PagedList<TObject>> QueryObjectsEqpkAsync<TObject>(this CloudTable table, RowInfo<TObject> row, TObject eqpk, int? limit, string paginationToken) where TObject : class, new()
+        {
+            var filter = row.GenerateFilterEqpk(eqpk);
+            var tableContinuationToken = Utilities.ConvertPaginationTokenToTableContinuationToken(paginationToken);
+            var tableQuerySegment = await table.ExecuteQuerySegmentedAsync(new TableQuery().Where(filter).Take(limit), tableContinuationToken);
+
+            return new PagedList<TObject>(
+                tableQuerySegment.Results.Select(row.ConvertEntityToObject),
+                Utilities.ConvertTableContinuationTokenToPaginationToken(tableQuerySegment.ContinuationToken));
         }
 
         public static async Task<PagedList<TObject>> QueryObjectsEqpkGerkLtrkAsync<TObject>(this CloudTable table, RowInfo<TObject> row, TObject eqpk, TObject gerk, TObject ltrk, int? limit, string paginationToken) where TObject : class, new()

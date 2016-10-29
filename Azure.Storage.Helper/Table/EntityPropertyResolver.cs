@@ -99,6 +99,7 @@ namespace Euyuil.Azure.Storage.Helper.Table
                 { typeof(DateTimeOffset?), new EntityPropertyResolver<DateTimeOffset?>(EntityProperty.GeneratePropertyForDateTimeOffset, entityProperty => entityProperty.DateTimeOffsetValue) },
                 { typeof(string), new EntityPropertyResolver<string>(EntityProperty.GeneratePropertyForString, entityProperty => entityProperty.StringValue) },
                 { typeof(byte[]), new EntityPropertyResolver<byte[]>(EntityProperty.GeneratePropertyForByteArray, entityProperty => entityProperty.BinaryValue) },
+                { typeof(Uri), new EntityPropertyResolver<Uri>(member => EntityProperty.GeneratePropertyForString(member.ToString()), entityProperty => new Uri(entityProperty.StringValue)) }
             };
             // ReSharper restore PossibleInvalidOperationException
         }
