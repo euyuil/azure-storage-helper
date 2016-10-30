@@ -6,12 +6,6 @@ namespace Euyuil.Azure.Storage.Helper.Table
 {
     public class PartitionInfo<TObject>
     {
-        public PartitionInfo(EntityKeyInfo<TObject> partitionKey, params RowInfo<TObject>[] rows)
-        {
-            PartitionKey = partitionKey;
-            Rows = new List<RowInfo<TObject>>(rows);
-        }
-
         public PartitionInfo(
             string partitionKeyPrefix,
             Expression<Func<TObject, object>> partitionKeySegmentsExpression,
