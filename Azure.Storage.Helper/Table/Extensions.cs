@@ -121,6 +121,19 @@ namespace Euyuil.Azure.Storage.Helper.Table
             return partitionKeyFilter;
         }
 
+        public static string GenerateFilterGepkLepk<TObject>(this RowInfo<TObject> row, TObject gepk, TObject lepk)
+        {
+            var gePartitionKey = row.PartitionKey.KeyGetter.Invoke(gepk);
+            var lePartitionKey = row.PartitionKey.KeyGetter.Invoke(lepk);
+
+            var partitionKeyFilter = TableQuery.CombineFilters(
+                TableQuery.GenerateFilterCondition(nameof(ITableEntity.PartitionKey), QueryComparisons.GreaterThanOrEqual, gePartitionKey),
+                TableOperators.And,
+                TableQuery.GenerateFilterCondition(nameof(ITableEntity.PartitionKey), QueryComparisons.LessThanOrEqual, lePartitionKey));
+
+            return partitionKeyFilter;
+        }
+
         public static string GenerateFilterEqpkGerk<TObject>(this RowInfo<TObject> row, TObject eqpk, TObject gerk)
         {
             var partitionKey = row.PartitionKey.KeyGetter.Invoke(eqpk);
@@ -191,17 +204,23 @@ namespace Euyuil.Azure.Storage.Helper.Table
         public static async Task<PagedList<TObject>> QueryObjectsEqpkAsync<TObject>(this CloudTable table, RowInfo<TObject> row, TObject eqpk, int? limit, string paginationToken) where TObject : class, new()
         {
             var filter = row.GenerateFilterEqpk(eqpk);
-            var tableContinuationToken = Utilities.ConvertPaginationTokenToTableContinuationToken(paginationToken);
-            var tableQuerySegment = await table.ExecuteQuerySegmentedAsync(new TableQuery().Where(filter).Take(limit), tableContinuationToken);
+            return await QueryObjectsFilterAsync(table, row, filter, limit, paginationToken);
+        }
 
-            return new PagedList<TObject>(
-                tableQuerySegment.Results.Select(row.ConvertEntityToObject),
-                Utilities.ConvertTableContinuationTokenToPaginationToken(tableQuerySegment.ContinuationToken));
+        public static async Task<PagedList<TObject>> QueryObjectsGepkLepkAsync<TObject>(this CloudTable table, RowInfo<TObject> row, TObject gepk, TObject lepk, int? limit, string paginationToken) where TObject : class, new()
+        {
+            var filter = row.GenerateFilterGepkLepk(gepk, lepk);
+            return await QueryObjectsFilterAsync(table, row, filter, limit, paginationToken);
         }
 
         public static async Task<PagedList<TObject>> QueryObjectsEqpkGerkLtrkAsync<TObject>(this CloudTable table, RowInfo<TObject> row, TObject eqpk, TObject gerk, TObject ltrk, int? limit, string paginationToken) where TObject : class, new()
         {
             var filter = row.GenerateFilterEqpkGerkLtrk(eqpk, gerk, ltrk);
+            return await QueryObjectsFilterAsync(table, row, filter, limit, paginationToken);
+        }
+
+        private static async Task<PagedList<TObject>> QueryObjectsFilterAsync<TObject>(CloudTable table, RowInfo<TObject> row, string filter, int? limit, string paginationToken) where TObject : class, new()
+        {
             var tableContinuationToken = Utilities.ConvertPaginationTokenToTableContinuationToken(paginationToken);
             var tableQuerySegment = await table.ExecuteQuerySegmentedAsync(new TableQuery().Where(filter).Take(limit), tableContinuationToken);
 
